@@ -25,10 +25,11 @@ from tipg.filter.evaluate import to_filter
 from tipg.filter.filters import bbox_to_wkt
 from tipg.logger import logger
 from tipg.model import Extent
-from tipg.settings import FeaturesSettings, MVTSettings, TableSettings
+from tipg.settings import DatabaseSettings, FeaturesSettings, MVTSettings, TableSettings
 
 from fastapi import FastAPI
 
+database_settings = DatabaseSettings()
 mvt_settings = MVTSettings()
 features_settings = FeaturesSettings()
 
@@ -914,7 +915,7 @@ async def get_collection_index(  # noqa: C901
     schemas = schemas or ["public"]
 
     query = """
-        SELECT pg_temp.tipg_catalog(
+        SELECT {}.tipg_catalog(
             :schemas,
             :tables,
             :exclude_tables,
@@ -926,7 +927,9 @@ async def get_collection_index(  # noqa: C901
             :spatial_extent,
             :datetime_extent
         );
-    """  # noqa: W605
+    """.format(
+        database_settings.function_schema
+    )  # noqa: W605
 
     async with db_pool.acquire() as conn:
         rows = await conn.fetch_b(
@@ -953,7 +956,7 @@ async def get_collection_index(  # noqa: C901
             table_id = table["schema"] + "." + table["name"]
             confid = table["schema"] + "_" + table["name"]
 
-            if table_id == "pg_temp.tipg_catalog":
+            if table_id == "{}.tipg_catalog".format(database_settings.function_schema):
                 continue
 
             table_conf = table_confs.get(confid, {})

@@ -162,6 +162,8 @@ class DatabaseSettings(BaseSettings):
 
     only_spatial_tables: bool = True
 
+    write_sql: bool = True
+
     model_config = {"env_prefix": "TIPG_DB_", "env_file": ".env", "extra": "ignore"}
 
 

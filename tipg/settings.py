@@ -162,6 +162,8 @@ class DatabaseSettings(BaseSettings):
 
     only_spatial_tables: bool = True
 
+    function_schema: str = "pg_temp"
+
     model_config = {"env_prefix": "TIPG_DB_", "env_file": ".env", "extra": "ignore"}
 
 

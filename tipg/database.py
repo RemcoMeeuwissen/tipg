@@ -7,7 +7,7 @@ import orjson
 from buildpg import asyncpg
 
 from tipg.logger import logger
-from tipg.settings import PostgresSettings
+from tipg.settings import DatabaseSettings, PostgresSettings
 
 from fastapi import FastAPI
 
@@ -18,6 +18,8 @@ except ImportError:
     from importlib_resources import files as resources_files  # type: ignore
 
 DB_CATALOG_FILE = resources_files(__package__) / "sql" / "dbcatalog.sql"
+
+database_settings = DatabaseSettings()
 
 
 class connection_factory:
@@ -46,7 +48,7 @@ class connection_factory:
 
         # Note: we add `pg_temp as the first element of the schemas list to make sure
         # we register the custom functions and `dbcatalog` in it.
-        schemas = ",".join(["pg_temp", *self.schemas])
+        schemas = ",".join([database_settings.function_schema, *self.schemas])
         logger.debug(f"Looking for Tables and Functions in {schemas} schemas")
 
         await conn.execute(

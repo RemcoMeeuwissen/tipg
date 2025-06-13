@@ -173,6 +173,7 @@ class DatabaseSettings(BaseSettings):
     exclude_function_schemas: Optional[List[str]] = None
     datetime_extent: bool = True
     spatial_extent: bool = True
+    write_sql: bool = True
 
     only_spatial_tables: bool = True
 

@@ -8,12 +8,13 @@ import orjson
 from buildpg import asyncpg
 
 from tipg.logger import logger
-from tipg.settings import PostgresSettings
+from tipg.settings import DatabaseSettings, PostgresSettings
 
 from fastapi import FastAPI
 
 DB_CATALOG_FILE = resources_files(__package__) / "sql" / "dbcatalog.sql"
 
+database_settings = DatabaseSettings()
 
 class connection_factory:
     """Connection creation."""
@@ -47,24 +48,25 @@ class connection_factory:
         schemas = ",".join([self.tipg_schema, *self.schemas])
         logger.debug(f"Looking for Tables and Functions in {schemas} schemas")
 
-        await conn.execute(
-            f"""
-            SELECT set_config(
-                'search_path',
-                '{schemas},' || current_setting('search_path', false),
-                false
-                );
-            """
-        )
+        if database_settings.write_sql:
+            await conn.execute(
+                f"""
+                SELECT set_config(
+                    'search_path',
+                    '{schemas},' || current_setting('search_path', false),
+                    false
+                    );
+                """
+            )
 
-        # Register custom SQL functions/table/views in `{tipg_schema}`
-        for sqlfile in self.user_sql_files:
-            await conn.execute(sqlfile.read_text())
+            # Register custom SQL functions/table/views in `{tipg_schema}`
+            for sqlfile in self.user_sql_files:
+                await conn.execute(sqlfile.read_text())
 
-        # Register TiPG functions in `{tipg_schema}`
-        await conn.execute(
-            DB_CATALOG_FILE.read_text().replace("pg_temp", self.tipg_schema)
-        )
+            # Register TiPG functions in `{tipg_schema}`
+            await conn.execute(
+                DB_CATALOG_FILE.read_text().replace("pg_temp", self.tipg_schema)
+            )
 
 
 async def connect_to_db(
